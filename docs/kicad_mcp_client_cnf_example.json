@@ -1,0 +1,46 @@
+{
+  "execution_engine": "asyncio",
+  "logger": {
+    "transports": [
+      "console",
+      "file"
+    ],
+    "level": "debug",
+    "progress_display": true,
+    "path_settings": {
+      "path_pattern": "logs/mcp-agent-{unique_id}.jsonl",
+      "unique_id": "timestamp",
+      "timestamp_format": "%Y%m%d_%H%M%S"
+    }
+  },
+  "mcp": {
+    "servers": {
+      "playwright": {
+        "command": "npx",
+        "args": [
+          "@playwright/mcp@latest"
+        ]
+      },
+      "chrome-devtools": {
+        "command": "npx",
+        "args": [
+          "chrome-devtools-mcp@latest"
+        ]
+      },
+      "kicad-mcp-server": {
+        "command": "uv",
+        "args": [
+          "--directory",
+          "C:/code/kicad-mcp-server",
+          "run",
+          "main.py"
+        ]
+      }
+    }
+  },
+  "openai": {
+    "api_key": null,
+    "default_model": "gpt-4o-mini",
+    "base_url": "https://aihubmix.com/v1"
+  }
+}
