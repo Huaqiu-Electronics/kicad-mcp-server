@@ -9,7 +9,7 @@ import httpx
 import base64
 import xml.etree.ElementTree as ET
 
-def typechat_get_llm(model = os.getenv("OPENAI_MODEL") or "gemini-2.5-flash-nothink"):
+def typechat_get_llm(model = os.getenv("OPENAI_MODEL") or "gpt-5-mini"):
     llm = create_openai_language_model(
         model= model,
         api_key=os.getenv("OPENAI_API_KEY") or "",
