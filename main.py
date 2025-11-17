@@ -122,7 +122,7 @@ async def get_current_kicad_project():
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f'{KICAD_API_URL}/netlist', timeout=30.0)
+            response = await client.get(f'{KICAD_API_URL}/{KiCadEndPoint.NET_LIST.value}', timeout=30.0)
             response.raise_for_status()
 
             res = response.json()
