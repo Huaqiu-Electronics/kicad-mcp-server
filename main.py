@@ -4,6 +4,7 @@ import httpx
 import os
 from enum import Enum
 import base64
+import sys
 from typechat import Failure, TypeChatJsonTranslator, TypeChatValidator ,create_openai_language_model
 import httpx
 import base64
@@ -36,7 +37,18 @@ class API_PLACE_NETLABELS(TypedDict):
 
 mcp = FastMCP("docs")
 
-KICAD_API_URL= "http://localhost:9234"
+
+class KiCadAPI:
+    port : int | None = None
+
+    def get_url(self) -> str:
+        return f"http://127.0.0.1:{self.port}"
+    
+    def set_port(self, port: int):
+        self.port = port
+
+
+KICAD_API = KiCadAPI()
 
 class KiCadEndPoint(str, Enum):
     """KiCad API endpoints"""
@@ -100,7 +112,7 @@ async def place_all_net_labels(nets: API_PLACE_NETLABELS):
 
             try:
                 response = await client.post(
-                    f"{KICAD_API_URL}/{KiCadEndPoint.PLACE_NET_LABELS.value}",
+                    f"{KICAD_API.get_url()}/{KiCadEndPoint.PLACE_NET_LABELS.value}",
                     json=payload,
                     timeout=30.0
                 )
@@ -122,7 +134,7 @@ async def get_current_kicad_project():
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f'{KICAD_API_URL}/{KiCadEndPoint.NET_LIST.value}', timeout=30.0)
+            response = await client.get(f'{KICAD_API.get_url()}/{KiCadEndPoint.NET_LIST.value}', timeout=30.0)
             response.raise_for_status()
 
             res = response.json()
@@ -157,4 +169,9 @@ async def get_current_kicad_project():
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2 :
+        print("Usage: python main.py <KICAD_SDK_PORT>")
+        sys.exit(1)
+    
+    KICAD_API.set_port(int(sys.argv[1]))
     mcp.run(transport="stdio")
