@@ -35,7 +35,7 @@ class API_PLACE_NETLABELS(TypedDict):
     nets : List[API_PLACE_NETLABEL_PARAMS]
 
 
-mcp = FastMCP("docs")
+mcp = FastMCP("kicad-mcp-server")
 
 
 class KiCadAPI:
