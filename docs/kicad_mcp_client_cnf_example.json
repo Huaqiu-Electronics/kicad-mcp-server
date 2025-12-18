@@ -33,7 +33,8 @@
           "--directory",
           "C:/code/kicad-mcp-server",
           "run",
-          "main.py"
+          "main.py",
+          "2137"
         ]
       }
     }

@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+        "kicad-mcp-server": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "C:/code/kicad-mcp-server",
+                "run",
+                "main.py",
+                "2137"
+            ]
+        }
+    }
+}
