@@ -600,6 +600,7 @@ dependencies = [
     { name = "langchain-community" },
     { name = "langchain-core" },
     { name = "mcp", extra = ["cli"] },
+    { name = "pynng" },
     { name = "typechat" },
 ]
 
@@ -612,6 +613,7 @@ requires-dist = [
     { name = "langchain-community", specifier = ">=0.1.0" },
     { name = "langchain-core", specifier = ">=0.1.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.3.0" },
+    { name = "pynng", specifier = ">=0.8.1" },
     { name = "typechat", specifier = ">=0.0.4" },
 ]
 
@@ -2363,6 +2365,39 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
+]
+
+[[package]]
+name = "pynng"
+version = "0.8.1"
+source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
+dependencies = [
+    { name = "cffi" },
+    { name = "sniffio" },
+]
+sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/d4/8c/23141a4b94fdb69c72fe54734a5da192ecbaf5c4965ba6d3a753e6a8ac34/pynng-0.8.1.tar.gz", hash = "sha256:60165f34bdf501885e0acceaeed79bc35a57f3ca3c913cb38c14919b9bd3656f", size = 6364925, upload-time = "2025-01-16T03:42:32.848Z" }
+wheels = [
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/c4/52/6e4f578abfddde63d6bfe4915ca94ecdfd24215a30eefcd22190d2ee0474/pynng-0.8.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:69b9231083c292989f60f0e6c645400ce08864d5bc0e87c61abffd0a1e5764a5", size = 1089598, upload-time = "2025-01-16T03:40:25.123Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/b4/34/6c15e10660be6cc1229948773f1c3868ace7f68f8e728e91234722fe3246/pynng-0.8.1-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3ec0b1164fc31c5a497c4c53438f8e7b181d1ee68b834c22f92770172a933346", size = 727897, upload-time = "2025-01-16T03:40:29.79Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/b5/03/6edd6cea97aa838f2ebfa81178800e5b3cd1f0e979efe01ed50f21ab8f76/pynng-0.8.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c3ee6a617f6179cddff25dd36df9b7c0d6b37050b08b5c990441589b58a75b14", size = 936328, upload-time = "2025-01-16T03:40:31.976Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/5e/21/c03e8c37c87ce781a61577233ba1f1b5c8da89f6638fe78e3f63a3fac067/pynng-0.8.1-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:6d40eaddeaf3f6c3bae6c85aaa2274f3828b7303c9b0eaa5ae263ff9f96aec52", size = 736827, upload-time = "2025-01-16T03:40:33.706Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/4e/b4/661543256fc81ab024960d8dd58f01f2b80f65f6374fd5a46ef1ccccf4c8/pynng-0.8.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:4656e541c0dd11cd9c69603de0c13edf21e41ff8e8b463168ca7bd96724c19c2", size = 939704, upload-time = "2025-01-16T03:40:35.539Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/19/fb/86a9530f2ca1f1154f10b83607ca72b42716f9a2d4fbb46f039ff0b3c38d/pynng-0.8.1-cp311-cp311-win32.whl", hash = "sha256:1200af4d2f19c6d26e8742fff7fcede389b5ea1b54b8da48699d2d5562c6b185", size = 370599, upload-time = "2025-01-16T03:40:38.482Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/8e/e3/63ab15b96be4e61be4d563b78eb716be433afb68871b82cdc7ab0a579037/pynng-0.8.1-cp311-cp311-win_amd64.whl", hash = "sha256:b4e271538ed0dd029f2166b633084691eca10fe0d7f2b579db8e1a72f8b8011e", size = 450217, upload-time = "2025-01-16T03:40:41.424Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/7a/b7/243a4e919b2e58cb21ba3e39b9d139e6a58158e944a03b78304b0d2b2881/pynng-0.8.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:df13ffa5a4953b85ed43c252f5e6a00b7791faa22b9d3040e0546d878fc921a4", size = 1089916, upload-time = "2025-01-16T03:40:43.088Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/cb/9e/d7c10e38ddaa7a2e3f59cd3a5d2b3978f28d7e3f5ae1167c9555e35f1c48/pynng-0.8.1-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2fb8d43c23e9668fb3db3992b98b7364c2991027a79d6e66af850d70820a631c", size = 727667, upload-time = "2025-01-16T03:40:44.875Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/94/42/cf84ac7b60713af568ffaa8774eb41650e49ba3c0906107f9a889cf86d40/pynng-0.8.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:915f4f8c39684dcf6028548110f647c44a517163db5f89ceeb0c17b9c3a37205", size = 938203, upload-time = "2025-01-16T03:40:48.421Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/41/2e/2196c9c3d8ad1af35faf942482fbfc1156898b0945e8412a33d3cfcbfbe8/pynng-0.8.1-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:ead5f360a956bc7ccbe3b20701346cecf7d1098b8ad77b6979fd7c055b9226f1", size = 736244, upload-time = "2025-01-16T03:40:51.06Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/9b/eb/347e5626e3174992b4b4cf8ff3f7fe965a2e7c7703bf2765db828970f895/pynng-0.8.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:6d8237ed1c49823695ea3e6ef2e521370426b67f2010850e1b6c66c52aa1f067", size = 941519, upload-time = "2025-01-16T03:40:53.761Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/9e/67/e1027872acbdd755994d9cdf3195a6329ce2a141943fbae0e9687c533a59/pynng-0.8.1-cp312-cp312-win32.whl", hash = "sha256:78fe08a000b6c7200c1ad0d6a26491c1ba5c9493975e218af0963b9ca03e5a7a", size = 370576, upload-time = "2025-01-16T03:40:55.818Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/4b/19/bd014dfc7cdaacdba15c61a591dc12e7d5307006013f8ceb949bed6d3c48/pynng-0.8.1-cp312-cp312-win_amd64.whl", hash = "sha256:117552188abe448a467feedcc68f03f2d386e596c0e44a0849c05fca72d40d3f", size = 450454, upload-time = "2025-01-16T03:40:57.737Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/0d/fd/b6b43259bf87c7640824310c930761ea814eb4b726f2814ef847ad80d96d/pynng-0.8.1-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:e1013dc1773e8a4cee633a8516977d59c17711b56b0df9d6c174d8ac722b19d9", size = 1089913, upload-time = "2025-01-16T03:41:01.543Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/44/71/134faf3a6689898167c0b8a55b8a55069521bc79ae6eed1657b075545481/pynng-0.8.1-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0a89b5d3f9801913a22c85cf320efdffc1a2eda925939a0e1a6edc0e194eab27", size = 727669, upload-time = "2025-01-16T03:41:04.936Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/72/3d/2d77349fa87671d31c5c57ea44365311338b0a8d984e8b095add62f18fda/pynng-0.8.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b2f0a7fdd96c99eaf1a1fce755a6eb39e0ca1cf46cf81c01abe593adabc53b45", size = 938072, upload-time = "2025-01-16T03:41:09.685Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/04/91/580382d32fe90dd3cc0310358d449991070091b78a8f97df3f8e4b3d5fee/pynng-0.8.1-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:88cbda575215e854a241ae837aac613e88d197b0489ef61f4a42f2e9dd793f01", size = 736250, upload-time = "2025-01-16T03:41:11.304Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/b6/db/9bf6a8158187aa344c306c6037ff20d134132d83596dcbb8537faaad610d/pynng-0.8.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:3f635d6361f9ad81d16ba794a5a9b3aa47ed92a7709b88396523676cb6bddb1f", size = 941514, upload-time = "2025-01-16T03:41:13.156Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/26/f3/9a7676e3d115834a5acf674590bb32e61f9caa5b8f0971628fc562670d35/pynng-0.8.1-cp313-cp313-win32.whl", hash = "sha256:6d5c51249ca221f0c4e27b13269a230b19fc5e10a60cbfa7a8109995b22e861e", size = 370575, upload-time = "2025-01-16T03:41:15.998Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/ff/0e/11d76f7aeb733e966024eb6b6adf73280d2c600f8fa8bdb6ea34d33e9a19/pynng-0.8.1-cp313-cp313-win_amd64.whl", hash = "sha256:1f9c52bca0d063843178d6f43a302e0e2d6fbe20272de5b3c37f4873c3d55a42", size = 450453, upload-time = "2025-01-16T03:41:17.604Z" },
 ]
 
 [[package]]
