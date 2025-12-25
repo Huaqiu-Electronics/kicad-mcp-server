@@ -12,6 +12,14 @@ import json
 
 from typechat import Failure, TypeChatJsonTranslator, TypeChatValidator, create_openai_language_model
 
+def typechat_get_llm(model = os.getenv("OPENAI_MODEL") or "gpt-5-mini"):
+    llm = create_openai_language_model(
+        model= model,
+        api_key=os.getenv("OPENAI_API_KEY") or "",
+        endpoint=os.getenv("OPENAI_BASE_URL") or "",
+    )
+    llm.timeout_seconds = 60 * 3  # 3 minutes
+    return llm
 # Load environment variables
 load_dotenv()
 
@@ -123,55 +131,6 @@ class KiCadClient:
             pass
 
 
-class TypeChatService:
-    """Service for handling TypeChat operations"""
-    
-    @staticmethod
-    def get_llm(model: str | None = None):
-        """Get a configured LLM instance"""
-        if model is None:
-            model = os.getenv("OPENAI_MODEL") or "gpt-5-mini"
-        
-        llm = create_openai_language_model(
-            model=model,
-            api_key=os.getenv("OPENAI_API_KEY") or "",
-            endpoint=os.getenv("OPENAI_BASE_URL") or "",
-        )
-        llm.timeout_seconds = 60 * 3  # 3 minutes
-        return llm
-    
-    @staticmethod
-    async def generate_net_labels(net_list: str) -> API_PLACE_NETLABELS | None:
-        """Generate net labels from XML representation"""
-        llm = TypeChatService.get_llm()
-        validator = TypeChatValidator(API_PLACE_NETLABELS)
-        translator = TypeChatJsonTranslator(llm, validator, API_PLACE_NETLABELS)
-
-        instruction = f"""
-You are an assistant that generates all net label connections for a KiCad project.
-Return a JSON object with a single field "nets", which is a list of objects
-following API_PLACE_NETLABEL_PARAMS:
-
-API_PLACE_NETLABEL_PARAMS:
-  net_name: string
-  pins: list of objects with:
-    - designator: string
-    - pin_num: integer
-
-Use the XML provided below to generate the net labels.
---- BEGIN NETLIST XML ---
-{net_list}
---- END NETLIST XML ---
-"""
-
-        result = await translator.translate(instruction)
-
-        if isinstance(result, Failure):
-            print(f"[TypeChat Error] {result.message}")
-            return None
-
-        return result.value
-
 
 # Initialize MCP server
 mcp = FastMCP("kicad-mcp-server")
@@ -188,15 +147,43 @@ async def generate_net_labels(net_list: str) -> 'API_PLACE_NETLABELS | None':
     Returns a list of API_PLACE_NETLABELS representing connections.
     Expected to be used with the place_all_net_labels tool to automatically place all net labels into KiCad to apply the connections.
     """
-    return await TypeChatService.generate_net_labels(net_list)
+
+    model = typechat_get_llm()
+    validator = TypeChatValidator(API_PLACE_NETLABELS)
+    translator = TypeChatJsonTranslator(model, validator, API_PLACE_NETLABELS)
+
+    instruction = f"""
+You are an assistant that generates all net label connections for a KiCad project.
+Return a JSON object with a single field "nets", which is a list of objects
+following API_PLACE_NETLABEL_PARAMS:
+
+API_PLACE_NETLABEL_PARAMS:
+  net_name: string
+  pins: list of objects with:
+    - designator: string
+    - pin_num: integer
+
+Use the XML provided below to generate the net labels.
+--- BEGIN NETLIST XML ---
+{net_list}
+--- END NETLIST XML ---
+"""
+
+    result = await translator.translate(instruction)
+
+    if isinstance(result, Failure):
+        print(f"[TypeChat Error] {result.message}")
+        return None
+
+    return result.value
 
 
 @mcp.tool()
 def place_all_net_labels(nets: API_PLACE_NETLABELS):
     """
-    Send multiple net label placements to the KiCad SDK server using NNG.
+    Send multiple net label placements to the KiCad SDK HTTP server.
 
-    Wraps each net in an AGENT_ACTION JSON payload and sends it to the SDK server.
+    Wraps each net in an AGENT_ACTION JSON payload and posts to /placeNetLabels.
     """
     if KICAD_CLIENT is None:
         print("[KiCad SDK] Client not initialized")
