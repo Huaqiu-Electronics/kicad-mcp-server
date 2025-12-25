@@ -1,9 +1,11 @@
+import logging
+from logging.handlers import RotatingFileHandler
 from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 import os
+import sys
 from enum import Enum
 import base64
-import sys
 import xml.etree.ElementTree as ET
 from typing_extensions import TypedDict, List
 from pydantic import BaseModel
@@ -22,6 +24,23 @@ def typechat_get_llm(model = os.getenv("OPENAI_MODEL") or "gpt-5-mini"):
     return llm
 # Load environment variables
 load_dotenv()
+
+# Setup logging
+log_dir = os.path.join(os.getcwd(), 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
+# Configure logging
+log_file = os.path.join(log_dir, 'kicad-mcp-server.log')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 
 class KiCadCommand(str, Enum):
@@ -52,13 +71,16 @@ class KiCadClient:
     
     def __init__(self, socket_url: str):
         """Initialize KiCad client with NNG socket URL"""
+        logger.info(f"Initializing KiCadClient with socket URL: {socket_url}")
         self.socket_url = socket_url
         self.req_socket = pynng.Req0(recv_timeout=30000, send_timeout=30000)  # 30 seconds timeout
         self.req_socket.dial(socket_url)
+        logger.info(f"Successfully connected to KiCad SDK at: {socket_url}")
     
     def get_netlist(self) -> str | None:
         """Get the complete XML representation of the current KiCad project"""
         try:
+            logger.info("Sending netlist request to KiCad SDK")
             # Send netlist request
             request = {
                 "cmd": KiCadCommand.NET_LIST.value
@@ -66,13 +88,16 @@ class KiCadClient:
             
             # Send JSON request
             self.req_socket.send(json.dumps(request).encode())
+            logger.debug(f"Sent netlist request: {request}")
             
             # Receive response
             response_data = self.req_socket.recv()
             response = json.loads(response_data.decode())
+            logger.debug(f"Received netlist response: {response}")
             
             netlist = response.get("net_list")
             if not netlist:
+                logger.warning("No net_list found in response")
                 return None
 
             xml_content = base64.b64decode(netlist).decode("utf-8")
@@ -88,19 +113,21 @@ class KiCadClient:
                 return cleaned_xml
 
             except ET.ParseError as e:
-                print(f"[KiCad SDK] XML parsing failed: {e}")
+                logger.error(f"XML parsing failed: {e}")
                 return xml_content  
 
         except pynng.exceptions.Timeout:
-            print("[KiCad SDK] Timeout while calling netlist command")
+            logger.error("Timeout while calling netlist command")
             return None
         except Exception as e:
-            print(f"[KiCad SDK] Request failed: {e}")
+            logger.error(f"Request failed: {e}")
             return None
     
     def place_net_label(self, net_params: API_PLACE_NETLABEL_PARAMS):
         """Send a single net label placement request to the KiCad SDK server"""
         try:
+            net_name = net_params['net_name']
+            logger.info(f"Placing net label for: {net_name}")
             # Create request payload
             request = {
                 "cmd": KiCadCommand.PLACE_NET_LABELS.value,
@@ -112,16 +139,17 @@ class KiCadClient:
             
             # Send JSON request
             self.req_socket.send(json.dumps(request).encode())
+            logger.debug(f"Sent place net label request for {net_name}: {request}")
             
             # Receive response
             response_data = self.req_socket.recv()
             response = json.loads(response_data.decode())
             
-            print("[place_all_net_labels] Response:", response)
+            logger.info(f"Place net labels response: {response}")
         except pynng.exceptions.Timeout:
-            print(f"[KiCad SDK] Timeout while placing net '{net_params['net_name']}'")
+            logger.error(f"Timeout while placing net '{net_params['net_name']}'")
         except Exception as e:
-            print(f"[KiCad SDK] Failed to place net '{net_params['net_name']}': {e}")
+            logger.error(f"Failed to place net '{net_params['net_name']}': {e}")
     
     def __del__(self):
         """Clean up the NNG socket"""
@@ -172,7 +200,7 @@ Use the XML provided below to generate the net labels.
     result = await translator.translate(instruction)
 
     if isinstance(result, Failure):
-        print(f"[TypeChat Error] {result.message}")
+        logger.error(f"TypeChat error: {result.message}")
         return None
 
     return result.value
@@ -186,7 +214,7 @@ def place_all_net_labels(nets: API_PLACE_NETLABELS):
     Wraps each net in an AGENT_ACTION JSON payload and posts to /placeNetLabels.
     """
     if KICAD_CLIENT is None:
-        print("[KiCad SDK] Client not initialized")
+        logger.error("Client not initialized")
         return
     
     for net_params in nets["nets"]:
@@ -202,7 +230,7 @@ def get_current_kicad_project() -> str | None:
         str | None: XML content of the current KiCad project.
     """
     if KICAD_CLIENT is None:
-        print("[KiCad SDK] Client not initialized")
+        logger.error("Client not initialized")
         return None
     
     return KICAD_CLIENT.get_netlist()
@@ -210,13 +238,14 @@ def get_current_kicad_project() -> str | None:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python main.py <KICAD_SDK_SOCKET_URL>")
-        print("Example: python main.py ipc:///tmp/kicad_sdk.ipc")
+        logger.info("Usage: python main.py <KICAD_SDK_SOCKET_URL>")
+        logger.info("Example: python main.py ipc:///tmp/kicad_sdk.ipc")
         sys.exit(1)
     
     # Initialize KiCad client with the provided socket URL
-    # No need for global keyword here since we're in the module scope
+    logger.info(f"Initializing KiCad client with socket URL: {sys.argv[1]}")
     KICAD_CLIENT = KiCadClient(sys.argv[1])
     
     # Run MCP server
+    logger.info("Starting MCP server with stdio transport")
     mcp.run(transport="stdio")
