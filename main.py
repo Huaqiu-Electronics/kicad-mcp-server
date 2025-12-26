@@ -165,6 +165,7 @@ class KiCadClient:
         """Clean up the NNG socket"""
         try:
             self.req_socket.close()
+            logger.info("Closed KiCad SDK NNG socket")
         except Exception as e:
             logger.error(str(e))
 
@@ -259,3 +260,4 @@ if __name__ == "__main__":
     # Run MCP server
     logger.info("Starting MCP server with stdio transport")
     mcp.run(transport="stdio")
+    logger.info("Quitting KiCad MCP SERVER")
