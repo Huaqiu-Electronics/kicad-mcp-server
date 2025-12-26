@@ -19,11 +19,11 @@ from typechat import (
 )
 
 
-def typechat_get_llm(model=os.getenv("OPENAI_MODEL") or "gpt-5-mini"):
+def typechat_get_llm(model=os.getenv("OPENAI_MODEL") or "gpt-5-mini", api_key=None, base_url=None):
     llm = create_openai_language_model(
         model=model,
-        api_key=os.getenv("OPENAI_API_KEY") or "",
-        endpoint=os.getenv("OPENAI_BASE_URL") or "",
+        api_key=api_key or os.getenv("OPENAI_API_KEY") or "",
+        endpoint=base_url or os.getenv("OPENAI_BASE_URL") or "",
     )
     llm.timeout_seconds = 60 * 3  # 3 minutes
     return llm
@@ -248,14 +248,27 @@ def get_current_kicad_project() -> str | None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        logger.info("Usage: python main.py <KICAD_SDK_SOCKET_URL>")
-        logger.info("Example: python main.py ipc:///tmp/kicad_sdk.ipc")
-        sys.exit(1)
-
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="KiCad MCP Server")
+    parser.add_argument("socket_url", help="KiCad SDK socket URL")
+    parser.add_argument("--api-key", help="OpenAI API key")
+    parser.add_argument("--base-url", help="OpenAI base URL")
+    parser.add_argument("--model", help="OpenAI model name")
+    
+    args = parser.parse_args()
+    
+    # Set environment variables from command-line arguments if provided
+    if args.api_key:
+        os.environ["OPENAI_API_KEY"] = args.api_key
+    if args.base_url:
+        os.environ["OPENAI_BASE_URL"] = args.base_url
+    if args.model:
+        os.environ["OPENAI_MODEL"] = args.model
+    
     # Initialize KiCad client with the provided socket URL
-    logger.info(f"Initializing KiCad client with socket URL: {sys.argv[1]}")
-    KICAD_CLIENT = KiCadClient(sys.argv[1])
+    logger.info(f"Initializing KiCad client with socket URL: {args.socket_url}")
+    KICAD_CLIENT = KiCadClient(args.socket_url)
 
     # Run MCP server
     logger.info("Starting MCP server with stdio transport")
