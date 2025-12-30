@@ -20,6 +20,8 @@ from sdk_api_params import API_PCB_PAD_PARAMS, API_MOVE_PCB_PAD_PARAMS, API_ROTA
 from sdk_api_params import API_PAD_DRILL_SHAPE, API_MODIFY_PAD_DRILL_SHAPE, API_SET_PAD_POSITION,API_PCB_LAYER_NAME,API_PCB_LAYER_NAME_LIST
 from sdk_api_params import API_PCB_FOOTPRINT_INFO, API_PCB_FOOTPRINT_INFO_LIST,API_PCB_REFERENCE,API_PCB_REFERENCE_LIST,API_MOVE_FOOTPRINT_PARAMS
 from sdk_api_params import API_MODIFY_FOOTPRINT_REFERENCE,API_SET_FOOTPRINT_POSITION, API_ROTATE_FOOTPRINT_PARAMS,API_FRAME_TYPE_PARAMS,API_FRAME_PARAMS
+from sdk_api_params import API_ZOOM_PARAMS
+
 
 from typechat import (
     Failure,
@@ -179,7 +181,7 @@ class KiCadClient:
         except Exception as e:
             logger.error(str(e))
 
-    def cpp_sdk_action( self, api_name : str, params: TypedDict, cmd_type : str = "cpp_sdk_action"):
+    def cpp_sdk_action( self, api_name : str, params: TypedDict = {}, cmd_type : str = "cpp_sdk_action"):
         """
         Common asynchronous function to call KiCad CPP SDK API via HTTP POST request
         ----------
@@ -1745,7 +1747,6 @@ def queryCurrentFrameType()->API_FRAME_PARAMS:
         logger.error( "Client not initialized")
 
     response : API_QUERY_RESULT = KICAD_CLIENT.cpp_sdk_action( api_name= "queryCurrentFrameType",params={}, cmd_type="cpp_sdk_query")
-    # print( f"queryCurrentFrameType : {response}")
     if "msg" not in response:
         logger.error("lack msg")
         return None
@@ -1836,6 +1837,520 @@ def saveFrame():
         logger.error("Client not initialized")
     
     return KICAD_CLIENT.cpp_sdk_action( api_name="saveFrame", params={})
+
+@mcp.tool()
+def saveAsFrame():
+    """
+    Saves the current KiCad frame (schematic/PCB) to a user-specified path via CPP SDK (Save As functionality).
+    
+    This function invokes the KiCad CPP SDK's `saveAs` API through the pre-initialized KICAD_CLIENT instance,
+    enabling "Save As" functionality for the current frame (e.g., schematic frame, PCB frame). 
+    Unlike the basic `saveFrame` function (which overwrites the existing file), this function allows 
+    specifying a new file path/location to save the frame, preserving the original file (if exists).
+    
+    Returns:
+        Optional[Dict]: Parsed JSON response from KiCad CPP SDK if the "Save As" operation succeeds,
+                        containing status and detailed save-as information (e.g., target path, frame type);
+                        None if the KICAD_CLIENT is uninitialized or the API call fails.
+    
+    Raises:
+        None: All exceptions are caught and logged internally by the underlying `cpp_sdk_action` method,
+              no explicit exceptions are raised by this function.
+    
+    Notes:
+        - Requires the KICAD_CLIENT instance to be properly initialized before calling (fails fast if not).
+        - The `saveAs` API may require path parameters in production (current params={} is a placeholder;
+          update params with target file path when implementing full functionality).
+        - Key difference from `saveFrame`: 
+          - `saveFrame`: Overwrites the existing file associated with the current frame.
+          - `saveAsFrame`: Saves the frame to a new user-defined path (original file remains unchanged).
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialized")
+    return KICAD_CLIENT.cpp_sdk_action(api_name="saveAs", params={})
+
+
+@mcp.tool()
+def importNonKicadSchematic():
+    """
+    Imports non-KiCad format schematic files into the current KiCad project via CPP SDK.
+    
+    This function invokes the KiCad CPP SDK's `importNonKicadSch` API through the pre-initialized
+    KICAD_CLIENT instance, enabling the import of schematic files in non-native KiCad formats
+    (e.g., Altium, Eagle, OrCAD, PADS schematic files) into the active KiCad project.
+    
+    The function serves as a programmatic wrapper for KiCad's "Import Non-KiCad Schematic" feature
+    (bound to the `ID_IMPORT_NON_KICAD_SCH` menu event in the schematic editor), replacing manual
+    menu clicks with an API-driven call.
+    
+    Returns:
+        Optional[Dict]: Parsed JSON response from the KiCad CPP SDK if import succeeds, containing
+                        status, imported file details, and conversion results; None if the client
+                        is uninitialized or the import operation fails.
+    
+    Raises:
+        None: All exceptions are caught and logged internally by the underlying `cpp_sdk_action` method;
+              no explicit exceptions are raised by this function.
+    
+    Notes:
+        - Requires the KICAD_CLIENT instance to be properly initialized before invocation (fails fast if not).
+        - The current empty `params={}` is a placeholder; in production, populate it with import parameters
+          such as source file path, target project path, or format-specific conversion options (e.g.:
+          `params={"file_path": "/path/to/altium_sch.SchDoc", "format": "altium"}`).
+        - Supported non-KiCad formats depend on KiCad CPP SDK's `importNonKicadSch` API capabilities
+          (common formats: Altium, Eagle, OrCAD, PADS, LTspice).
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialized")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name="importNonKicadSch", params={})
+
+@mcp.tool()
+def importVectorGraphicsFile():
+    """
+    Imports vector graphics files into the active KiCad schematic via CPP SDK.
+    
+    This function acts as a programmatic wrapper for KiCad's "Import Vector Graphics File" feature,
+    invoking the CPP SDK's `importVectorGraphic` API through the pre-initialized KICAD_CLIENT instance.
+    It enables importing vector graphics (e.g., SVG, EPS, DXF) directly into the current KiCad schematic
+    editor frame, preserving the vector properties (scalable without quality loss, editable shapes/lines).
+    
+    Unlike raster image import (PNG/JPG), vector graphics retain mathematical shape definitions, making
+    them ideal for adding logos, custom symbols, mechanical outlines, or branded elements to schematics.
+    
+    Returns:
+        Optional[Dict]: Parsed JSON response from the KiCad CPP SDK if import succeeds, containing
+                        status, imported file details (path, format), and placement metadata (scale, layer);
+                        None if the KICAD_CLIENT is uninitialized or the import operation fails.
+    
+    Raises:
+        None: All exceptions are caught and logged internally by the underlying `cpp_sdk_action` method;
+              no explicit exceptions are raised by this function.
+    
+    Notes:
+        - Requires the KICAD_CLIENT instance to be properly initialized before invocation (fails fast if not).
+        - The empty `params={}` is a placeholder; production use requires populating import parameters:
+          e.g., `params={"file_path": "/path/to/logo.svg", "target_layer": "F.SilkS", "scale": 1.0, "rotation": 0}`.
+        - Supported vector formats depend on KiCad CPP SDK capabilities (primary: SVG; secondary: EPS/DXF).
+        - Imported vector graphics are converted to editable KiCad schematic primitives (lines, curves, polygons).
+
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name= "importVectorGraphic", params={})
+
+
+@mcp.tool()
+def exportNetlist():
+    """
+    Exports a netlist file from the active KiCad schematic via CPP SDK.
+    
+    This function serves as a programmatic wrapper for KiCad's "Export Netlist" feature,
+    invoking the CPP SDK's `exportNetlist` API through the pre-initialized KICAD_CLIENT instance.
+    A netlist is a critical text-based file that describes the electrical connectivity of components
+    in the schematic (e.g., component references, pin connections, net names), enabling seamless
+    transfer of schematic logic to PCB layout tools.
+    
+    The exported netlist is compatible with KiCad's PCB editor and other EDA tools, forming the
+    bridge between schematic design and PCB layout implementation.
+    
+    Returns:
+        Optional[Dict]: Parsed JSON response from the KiCad CPP SDK if export succeeds, containing
+                        status, exported netlist file path, format, and schematic metadata;
+                        None if the KICAD_CLIENT is uninitialized or the export operation fails.
+    
+    Raises:
+        None: All exceptions are caught and logged internally by the underlying `cpp_sdk_action` method;
+              no explicit exceptions are raised by this function.
+    
+    Notes:
+        - Requires the KICAD_CLIENT instance to be properly initialized before invocation (fails fast if not).
+        - The empty `params={}` is a placeholder; production use requires populating export parameters:
+          e.g., `params={"file_path": "/path/to/exported_netlist.net", "format": "kicad_net", "include_power_nets": True}`.
+        - Supported netlist formats depend on KiCad CPP SDK capabilities (primary: KiCad native .net; secondary: EAGLE, SPICE).
+        - Ensure the active schematic is saved and free of connectivity errors before exporting (avoids invalid netlist).
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    
+    return KICAD_CLIENT.cpp_sdk_action( api_name="exportNetlist", params={})
+
+
+@mcp.tool()
+def openSchematicSetupDlg():
+    """
+    Opens the Schematic Setup dialog for the active KiCad schematic editor via CPP SDK.
+    
+    Wraps KiCad's native "Settings → Schematic Setup" feature, providing access to schematic
+    configuration (sheet size, electrical rules, text styles, etc.). Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (dialog status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name="schematicSetup", params={})
+
+@mcp.tool()
+def openPageSettingDlg():
+    """
+    Opens the Page Setting dialog for the active KiCad schematic/editor via CPP SDK.
+    
+    Wraps KiCad's native Page Setting feature, providing access to page-related configurations
+    (e.g., page size, orientation, margins, title block settings). Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (dialog status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name="pageSetting", params={})
+
+
+
+@mcp.tool()
+def openPrintDlg():
+    """
+    Opens the Print dialog for the active KiCad schematic/editor via CPP SDK.
+    
+    Wraps KiCad's native Print feature, providing access to print-related configurations
+    (e.g., printer selection, page range, scaling, color mode). Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (dialog status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name="print", params={})
+
+
+@mcp.tool()
+def openPlotDlg():
+    """
+    Opens the Plot dialog for the active KiCad schematic/PCB editor via CPP SDK.
+    
+    Wraps KiCad's native Plot feature, providing access to plot-related configurations
+    (e.g., output format (PDF/PNG/SVG), layer selection, plot scale, mirror plot). 
+    Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (dialog status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name="plot", params={})
+
+
+@mcp.tool()
+def closeCurrentFrame():
+    """
+    Closes the currently open frame module in KiCad via CPP SDK.
+    
+    Wraps KiCad's native frame closing feature, terminating the active frame (e.g., schematic editor,
+    PCB editor, or setup dialog frame) without exiting the entire KiCad application.
+    Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (frame close status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name= "closeCurrentFrame", params={})
+
+
+@mcp.tool()
+def openFindDialog():
+    """
+    Opens the Find dialog in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native Find feature, providing access to text/element search functionality
+    (e.g., finding component references, net names, or text strings in schematics/PCB files).
+    Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (dialog status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name= "find", params={})
+
+
+@mcp.tool()
+def openFindAndReplaceDialog():
+    """
+    Opens the Find and Replace dialog in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native Find and Replace feature, enabling search and batch replacement of
+    text/elements (e.g., component references, net names, text strings in schematics/PCB files).
+    Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (dialog status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+
+    return KICAD_CLIENT.cpp_sdk_action( api_name="findReplace", params={})
+
+
+@mcp.tool()
+def deleteTool():
+    """
+    Launches the interactive delete tool in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native interactive delete tool functionality, enabling manual selection
+    and deletion of schematic/PCB elements (e.g., components, wires, text) through direct
+    mouse interaction with the editor canvas. Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (tool launch status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action(api_name="deleteTool", params={})
+
+@mcp.tool()
+def selectAllItems():
+    """
+    Selects all items in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native "Select All" functionality, highlighting all editable elements
+    (e.g., components, wires, text, graphical primitives) in the current schematic/PCB file.
+    Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (selection status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="selectAll", params={})
+
+@mcp.tool()
+def unSelectAllItems():
+    """
+    Deselects all currently selected items in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native "Unselect All" functionality, clearing the selection state of all
+    editable elements (e.g., components, wires, text, graphical primitives) in the current
+    schematic/PCB file. Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (unselection status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="unselectAll", params={})
+
+
+@mcp.tool()
+def openEditTextAndGraphicPropertyDialog():
+    """
+    Opens the Text and Graphic Properties edit dialog in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native property edit feature, providing access to modify attributes of
+    text elements (font, size, color, alignment) and graphical primitives (line width, fill,
+    layer, color) in schematics/PCB files. Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (dialog status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action(  api_name= "editTextGraphicProperty", params={})
+
+
+@mcp.tool()
+def togglePropertyPanel():
+    """
+    Toggles the visibility of the property panel in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native property panel feature to switch its display state: shows the panel
+    if it is hidden, and hides it if it is currently visible (first call = show, second call = hide, vice versa).
+    The panel displays and allows modification of attributes for selected schematic/PCB elements
+    (e.g., component values, text styles, graphical properties like line width or layer).
+    
+    Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (panel toggle status, including current visibility) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="propertyPanel", params={})
+
+@mcp.tool()
+def toggleSearchPanel():
+    """
+    Toggles the visibility of the search panel in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native search panel feature to switch its display state: shows the panel
+    if it is hidden, and hides it if it is currently visible (first call = show, second call = hide, vice versa).
+    The panel supports real-time search of schematic/PCB elements (e.g., component references, net names, text strings).
+    
+    Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (panel toggle status, including current visibility) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="searchPanel", params={})
+
+
+@mcp.tool()
+def toggleHierarchyPanel():
+    """
+    Toggles the visibility of the hierarchy panel in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native hierarchy panel feature to switch its display state: shows the panel
+    if it is hidden, and hides it if it is currently visible (first call = show, second call = hide, vice versa).
+    The hierarchy panel provides navigation for multi-sheet schematic hierarchies in KiCad.
+    
+    Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (panel toggle status, including current visibility) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="hierarchyPanel", params = {})
+
+
+@mcp.tool()
+def toggleNetNavigatorPanel():
+    """
+    Toggles the visibility of the Net Navigator panel in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native Net Navigator panel feature to switch its display state: shows the panel
+    if it is hidden, and hides it if it is currently visible (first call = show, second call = hide, vice versa).
+    The Net Navigator panel provides quick navigation and management of electrical nets in schematics/PCB files.
+    
+    Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (panel toggle status, including current visibility) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="netNavigatorPanel", params={})
+
+
+@mcp.tool()
+def toggleDesignBlockPanel():
+    """
+    Toggles the visibility of the Design Block panel in the active KiCad editor via CPP SDK.
+    
+    Wraps KiCad's native Design Block panel feature to switch its display state: shows the panel
+    if it is hidden, and hides it if it is currently visible (first call = show, second call = hide, vice versa).
+    The Design Block panel enables management and reuse of modular design blocks in KiCad schematics/PCB projects.
+    
+    Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (panel toggle status, including current visibility) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="designBlockPanel", params={})
+
+
+@mcp.tool()
+def openSymbolLibraryBrowser():
+    """
+    Opens the Symbol Library Browser in the active KiCad schematic editor via CPP SDK.
+    
+    Wraps KiCad's native Symbol Library Browser feature, providing access to browse, search,
+    and insert schematic symbols from local/remote symbol libraries. Requires KICAD_CLIENT initialization.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (browser open status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="symbolLibraryBrowser",params={})
+
+
+@mcp.tool()
+def zoomView(params : API_ZOOM_PARAMS):
+    """
+    Adjusts the view zoom of the active KiCad editor based on the specified zoom parameter.
+    
+    Args:
+        params: API_ZOOM_PARAMS enumeration value that defines the zoom behavior:
+            - zoomInCenter: Zoom in centered on the canvas middle point
+            - zoomOutCenter: Zoom out centered on the canvas middle point
+            - zoomFitScreen: Fit all visible content to the editor screen
+            - zoomFitObjects: Fit all selected/loaded objects to the editor view
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (zoom operation status) or None if the client is uninitialized/fails.
+    
+    Raises:
+        None: Logs an error if KICAD_CLIENT is uninitialized but does not raise an exception.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action(api_name=params.value, params={})
+
+
+@mcp.tool()
+def showBusSyntaxHelp():
+    """
+    Opens the Bus Syntax Help documentation window in the active KiCad schematic editor via CPP SDK.
+    
+    Wraps KiCad's native Bus Syntax Help feature, displaying a help window that details the syntax rules
+    for defining and using bus nets in KiCad schematics (e.g., bus naming conventions, range specifications).
+    Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (help window open status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="showBusSyntaxHelp")
+
+@mcp.tool()
+def runERCCheck():
+    """
+    Runs the Electrical Rule Check (ERC) on the active KiCad schematic project via CPP SDK.
+    
+    Wraps KiCad's native ERC feature to validate schematic design against electrical rules,
+    identifying errors/warnings such as unconnected pins, short circuits, invalid net connections,
+    and mismatched pin types. The check results are displayed in the ERC report panel.
+    
+    Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns:
+        Optional[Dict]: Parsed SDK response (ERC check status, including error/warning counts) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.error("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name= "runERC")
+
+@mcp.tool()
+def showSpiceSimulator():
+    """
+    Opens the SPICE Simulator window in the active KiCad schematic editor via CPP SDK.
+    
+    Wraps KiCad's native SPICE Simulator feature, launching the simulation interface for
+    performing analog/digital circuit simulations on KiCad schematic designs (e.g., DC sweep,
+    AC analysis, transient simulation). Requires KICAD_CLIENT initialization before invocation.
+    
+    Returns: 
+        Optional[Dict]: Parsed SDK response (simulator window open status) or None on failure.
+    """
+    if KICAD_CLIENT is None:
+        logger.info("Client not initialize")
+    return KICAD_CLIENT.cpp_sdk_action( api_name="showSimulator")
+
+
 
 
 if __name__ == "__main__":

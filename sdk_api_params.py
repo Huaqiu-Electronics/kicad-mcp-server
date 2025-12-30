@@ -933,7 +933,19 @@ class API_FRAME_PARAMS( TypedDict):
 
 
 
-
-
+class API_ZOOM_PARAMS(str, Enum):
+    """
+    Enumeration of parameters for controlling view zoom operations in KiCad editor.
+    
+    Each value represents a specific zoom behavior centered on the editor canvas or adapted to content:
+    - zoomInCenter: Zoom in the view centered on the canvas middle point
+    - zoomOutCenter: Zoom out the view centered on the canvas middle point
+    - zoomFitScreen: Adjust zoom to fit all visible content to the editor screen
+    - zoomFitObjects: Adjust zoom to fit all selected/loaded objects to the editor view
+    """
+    zoomInCenter = "zoomInCenter"    # Zoom in centered on canvas
+    zoomOutCenter = "zoomOutCenter"  # Zoom out centered on canvas
+    zoomFitScreen = "zoomFitScreen"  # Zoom to fit content to screen
+    zoomFitObjects = "zoomFitObjects"# Zoom to fit objects to view
 
 
