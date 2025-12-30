@@ -44,22 +44,45 @@ def typechat_get_llm(model=os.getenv("OPENAI_MODEL") or "gpt-5-mini", api_key=No
 # Load environment variables
 load_dotenv()
 
-# Setup logging
-log_dir = os.path.join(os.getcwd(), "logs")
-os.makedirs(log_dir, exist_ok=True)
+def get_logger():
+    # Check DEBUG flag
+    DEBUG_KICAD_MCP_SERVER = os.getenv("DEBUG_KICAD_MCP_SERVER", "0") == "1"
 
-# Configure logging
-log_file = os.path.join(log_dir, "kicad-mcp-server.log")
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5),
-        logging.StreamHandler(),
-    ],
-)
+    # Determine OS-independent writable directory
+    if os.name == "nt":  # Windows
+        log_dir = os.path.join(os.getenv("APPDATA", os.getenv("TEMP", os.getcwd())), "kicad-mcp", "kicad-mcp-client")
+    else:  # Linux/MacOS
+        log_dir = os.path.join(os.getenv("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")), "kicad-mcp", "kicad-mcp-client")
 
-logger = logging.getLogger(__name__)
+    # Ensure the log directory exists
+    os.makedirs(log_dir, exist_ok=True)
+
+    # Configure logging
+    log_file = os.path.join(log_dir, "kicad-mcp-server.log")
+
+    # Always log to console
+    console_handler = logging.StreamHandler()
+
+    # Add file logging only if DEBUG_KICAD_MCP_SERVER is True
+    if DEBUG_KICAD_MCP_SERVER:
+        file_handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[console_handler, file_handler],
+        )
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[console_handler],  # Only console logging when not in DEBUG mode
+        )
+
+    return logging.getLogger(__name__)
+
+
+
+logger = get_logger()
 
 
 class KiCadCommand(str, Enum):
