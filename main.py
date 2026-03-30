@@ -337,22 +337,20 @@ def get_current_kicad_project() -> str | None:
 @mcp.tool()
 def draw_multi_wires( lines : API_MULTI_LINES_PARAMS ):
     """
-    Asynchronous API function for drawing multiple geometric line segments (non-electrical) in KiCad.
+    Asynchronous API function for drawing multiple electrical wires in KiCad for connecting component symbols.
 
     Key Differentiation:
-    This function is dedicated to rendering **pure geometric line segments** (graphical elements only) 
-    and does NOT create electrical connections. It is fundamentally different from:
-    - draw_wire: Creates electrical wires (conductive traces) for circuit connectivity in schematics/PCBs.
-    - draw_bus: Creates electrical buses for grouping multiple signals in schematics.
+    This function creates **electrical connection wires** for schematic circuit connectivity,
+    used to connect component pins and form electrical circuits.
 
     Unit Note:
     All coordinate values use millimeters as the unit, consistent with KiCad's schematic coordinate system.
 
     Parameters:
-        lines (API_MULTI_LINES_PARAMS): Strongly typed parameter structure for batch geometric line drawing:
-            - lines: List[API_LINE_PARAMS], a list of single geometric line parameters. Each API_LINE_PARAMS element contains:
-                - start (API_POINT_PARAMS): Start coordinate (x/y in mm) of the geometric line segment.
-                - end (API_POINT_PARAMS): End coordinate (x/y in mm) of the geometric line segment.
+        lines (API_MULTI_LINES_PARAMS): Strongly typed parameter structure for batch electrical wire drawing:
+            - lines: List[API_LINE_PARAMS], a list of single electrical wire parameters. Each API_LINE_PARAMS element contains:
+                - start (API_POINT_PARAMS): Start coordinate (x/y in mm) of the electrical wire (component pin/connection point).
+                - end (API_POINT_PARAMS): End coordinate (x/y in mm) of the electrical wire (component pin/connection point).
 
     Returns:
         None: No explicit return value; only logs the API call result to the console.
@@ -362,19 +360,19 @@ def draw_multi_wires( lines : API_MULTI_LINES_PARAMS ):
         - Prints an error prompt if no valid response is received from the SDK API.
 
     Example Usage:
-        >>> line1 = {"start": {"x": 10.0, "y": 20.0}, "end": {"x": 30.0, "y": 40.0}}
-        >>> line2 = {"start": {"x": 50.0, "y": 60.0}, "end": {"x": 70.0, "y": 80.0}}
-        >>> multi_lines_params = {"lines": [line1, line2]}
-        >>> await draw_multi_lines(multi_lines_params)
-        [Draw Multi Wires] Response: {"status": "success", "drawn_lines_count": 2}
+        >>> wire1 = {"start": {"x": 10.0, "y": 20.0}, "end": {"x": 30.0, "y": 40.0}}
+        >>> wire2 = {"start": {"x": 50.0, "y": 60.0}, "end": {"x": 70.0, "y": 80.0}}
+        >>> multi_wires_params = {"lines": [wire1, wire2]}
+        >>> await draw_multi_wires(multi_wires_params)
+        [Draw Multi Wires] Response: {"status": "success", "drawn_wires_count": 2}
     """
-    logger.info( "draw_mulit_lines")
+    logger.info( "drawMultiWire")
     logger.info(f"lines : {lines}")
     if KICAD_CLIENT is None:
         logger.error( "Client not initialized")
 
     logger.info("Before cpp_sdk_action")
-    return KICAD_CLIENT.cpp_sdk_action( api_name= "drawMutiLine",params=lines)  
+    return KICAD_CLIENT.cpp_sdk_action( api_name= "drawMultiWire",params=lines)  
 
 
 @mcp.tool()
